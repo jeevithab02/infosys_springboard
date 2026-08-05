@@ -80,6 +80,7 @@ db.close()
 
 print("\nDatabase populated successfully.")
 
+<<<<<<< HEAD
 for _ in range(20):
 
     prediction = Prediction(
@@ -134,3 +135,46 @@ db.commit()
 db.close()
 
 print("20 predictions, 10 feedback and 5 operators added.")
+=======
+from backend.database.connection import SessionLocal
+from backend.models.failure_history import FailureHistory
+
+db = SessionLocal()
+
+records = [
+    FailureHistory(
+        charging_station_id=101,
+        failure_type="Power Failure",
+        description="Unexpected power outage while charging.",
+        failure_date="2026-07-10",
+        resolved="Yes",
+    ),
+    FailureHistory(
+        charging_station_id=102,
+        failure_type="Connector Fault",
+        description="Charging connector damaged.",
+        failure_date="2026-07-14",
+        resolved="No",
+    ),
+    FailureHistory(
+        charging_station_id=103,
+        failure_type="Communication Error",
+        description="Station lost connection to server.",
+        failure_date="2026-07-20",
+        resolved="Yes",
+    ),
+    FailureHistory(
+        charging_station_id=104,
+        failure_type="Battery Overheating",
+        description="Temperature exceeded safety threshold.",
+        failure_date="2026-08-01",
+        resolved="No",
+    ),
+]
+
+db.add_all(records)
+db.commit()
+db.close()
+
+print("Failure History Seed Data Added Successfully")
+>>>>>>> 2940916 (Added user model schema and API)
