@@ -1,21 +1,32 @@
+<<<<<<< HEAD:backend/api/main.py
+=======
+from backend.models import machine
+
+# pyrefly: ignore [missing-import]
+>>>>>>> 66f90ed (Added Operator module):backend/main.py
 from fastapi import FastAPI
 from backend.database.connection import engine, Base
 from backend.models.user import User
 from backend.models.machine import Machine
 from backend.schemas.machine import MachineCreate
 from backend.models.telemetry import Telemetry
+
 # pyrefly: ignore [missing-import]
 from backend.schemas.telemetry import TelemetryCreate
+
+# pyrefly: ignore [missing-import]
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from backend.models.maintenance import Maintenance
+
 # pyrefly: ignore [missing-import]
-from backend.schemas.maintenance import MaintenanceCreate   
+from backend.schemas.maintenance import MaintenanceCreate
 
 from backend.database.connection import get_db
 from backend.schemas.user import UserCreate
 from backend.ml.predict import predict_failure
 from backend.schemas.predict import PredictionInput
+<<<<<<< HEAD:backend/api/main.py
 from backend.models.prediction import Prediction
 # pyrefly: ignore [missing-import]
 from backend.schemas.prediction import PredictionCreate
@@ -23,38 +34,32 @@ from backend.schemas.prediction import PredictionCreate
 from backend.models.feedback import Feedback
 # pyrefly: ignore [missing-import]
 from backend.schemas.feedback import FeedbackCreate 
+=======
+from backend.models.operator import Operator
+from backend.schemas.operator import OperatorCreate
+>>>>>>> 66f90ed (Added Operator module):backend/main.py
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(
-    title="EV Charging Station Health Monitoring API",
-    version="1.0"
-)
+app = FastAPI(title="EV Charging Station Health Monitoring API", version="1.0")
 
 
 @app.get("/")
 def home():
-    return {
-        "message": "EV Charging Station Health Monitoring Backend Running"
-    }
+    return {"message": "EV Charging Station Health Monitoring Backend Running"}
+
 
 @app.post("/users")
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
 
-    new_user = User(
-        name=user.name,
-        email=user.email,
-        password=user.password
-    )
+    new_user = User(name=user.name, email=user.email, password=user.password)
 
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
 
-    return {
-        "message": "User added successfully",
-        "id": new_user.id
-    }
+    return {"message": "User added successfully", "id": new_user.id}
+
 
 @app.get("/users/all")
 def get_all_users(db: Session = Depends(get_db)):
@@ -63,11 +68,11 @@ def get_all_users(db: Session = Depends(get_db)):
 
     return users
 
+
 @app.get("/users")
 def get_users():
-    return {
-        "message": "User API is working"
-    }
+    return {"message": "User API is working"}
+
 
 @app.post("/charging-stations")
 def create_charging_station(machine_data: MachineCreate, db: Session = Depends(get_db)):
@@ -75,17 +80,14 @@ def create_charging_station(machine_data: MachineCreate, db: Session = Depends(g
     charging_station = Machine(
         station_name=machine_data.station_name,
         charger_type=machine_data.charger_type,
-        location=machine_data.location
+        location=machine_data.location,
     )
 
     db.add(charging_station)
     db.commit()
     db.refresh(charging_station)
 
-    return {
-        "message": "Charging station added successfully",
-        "id": charging_station.id
-    }
+    return {"message": "Charging station added successfully", "id": charging_station.id}
 
 
 @app.get("/charging-stations/all")
@@ -98,9 +100,8 @@ def get_all_charging_stations(db: Session = Depends(get_db)):
 
 @app.get("/charging-stations")
 def get_charging_stations():
-    return {
-        "message": "Charging station API is working"
-    }
+    return {"message": "Charging station API is working"}
+
 
 @app.post("/telemetry")
 def create_telemetry(telemetry_data: TelemetryCreate, db: Session = Depends(get_db)):
@@ -109,17 +110,14 @@ def create_telemetry(telemetry_data: TelemetryCreate, db: Session = Depends(get_
         charging_station_id=telemetry_data.charging_station_id,
         temperature=telemetry_data.temperature,
         humidity=telemetry_data.humidity,
-        power_consumption=telemetry_data.power_consumption
+        power_consumption=telemetry_data.power_consumption,
     )
 
     db.add(telemetry)
     db.commit()
     db.refresh(telemetry)
 
-    return {
-        "message": "Telemetry added successfully",
-        "id": telemetry.id
-    }
+    return {"message": "Telemetry added successfully", "id": telemetry.id}
 
 
 @app.get("/telemetry/all")
@@ -132,9 +130,8 @@ def get_all_telemetry(db: Session = Depends(get_db)):
 
 @app.get("/telemetry")
 def get_telemetry():
-    return {
-        "message": "Telemetry API is working"
-    }
+    return {"message": "Telemetry API is working"}
+
 
 @app.post("/maintenance")
 def create_maintenance(data: MaintenanceCreate, db: Session = Depends(get_db)):
@@ -142,17 +139,15 @@ def create_maintenance(data: MaintenanceCreate, db: Session = Depends(get_db)):
     maintenance = Maintenance(
         charging_station_id=data.charging_station_id,
         maintenance_date=data.maintenance_date,
-        status=data.status
+        status=data.status,
     )
 
     db.add(maintenance)
     db.commit()
     db.refresh(maintenance)
 
-    return {
-        "message": "Maintenance record added successfully",
-        "id": maintenance.id
-    }
+    return {"message": "Maintenance record added successfully", "id": maintenance.id}
+
 
 @app.get("/maintenance/all")
 def get_all_maintenance(db: Session = Depends(get_db)):
@@ -161,19 +156,30 @@ def get_all_maintenance(db: Session = Depends(get_db)):
 
     return maintenance
 
+
 @app.post("/predict")
 def predict_charging_station(data: PredictionInput):
 
-    result = predict_failure(
-        data.temperature,
-        data.humidity,
-        data.power_consumption
+    result = predict_failure(data.temperature, data.humidity, data.power_consumption)
+
+    return {"prediction": result}
+
+
+@app.post("/operators")
+def create_operator(operator: OperatorCreate, db: Session = Depends(get_db)):
+
+    new_operator = Operator(
+        name=operator.name,
+        email=operator.email,
+        phone=operator.phone,
+        shift=operator.shift,
     )
 
-    return {
-        "prediction": result
-    }
+    db.add(new_operator)
+    db.commit()
+    db.refresh(new_operator)
 
+<<<<<<< HEAD:backend/api/main.py
 @app.post("/prediction")
 def create_prediction(data: PredictionCreate, db: Session = Depends(get_db)):
 
@@ -221,3 +227,41 @@ def create_feedback(data: FeedbackCreate, db: Session = Depends(get_db)):
 def get_feedback(db: Session = Depends(get_db)):
     return db.query(Feedback).all()    
 
+=======
+    return {"message": "Operator added successfully", "id": new_operator.id}
+
+
+@app.get("/operators/all")
+def get_all_operators(db: Session = Depends(get_db)):
+
+    operators = db.query(Operator).all()
+
+    return operators
+
+
+@app.get("/operators")
+def get_operators():
+
+    return {"message": "Operator API is working"}
+
+
+@app.put("/operators/{operator_id}")
+def update_operator(
+    operator_id: int, operator: OperatorCreate, db: Session = Depends(get_db)
+):
+
+    existing_operator = db.query(Operator).filter(Operator.id == operator_id).first()
+
+    if not existing_operator:
+        return {"message": "Operator not found"}
+
+    existing_operator.name = operator.name
+    existing_operator.email = operator.email
+    existing_operator.phone = operator.phone
+    existing_operator.shift = operator.shift
+
+    db.commit()
+    db.refresh(existing_operator)
+
+    return {"message": "Operator updated successfully", "operator": existing_operator}
+>>>>>>> 66f90ed (Added Operator module):backend/main.py
