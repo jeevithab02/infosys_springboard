@@ -1,4 +1,3 @@
-from backend.models import machine
 from fastapi import FastAPI
 from backend.database.connection import engine, Base
 from backend.models.user import User
@@ -17,6 +16,13 @@ from backend.database.connection import get_db
 from backend.schemas.user import UserCreate
 from backend.ml.predict import predict_failure
 from backend.schemas.predict import PredictionInput
+from backend.models.prediction import Prediction
+# pyrefly: ignore [missing-import]
+from backend.schemas.prediction import PredictionCreate
+
+from backend.models.feedback import Feedback
+# pyrefly: ignore [missing-import]
+from backend.schemas.feedback import FeedbackCreate 
 
 Base.metadata.create_all(bind=engine)
 
@@ -167,4 +173,51 @@ def predict_charging_station(data: PredictionInput):
     return {
         "prediction": result
     }
+
+@app.post("/prediction")
+def create_prediction(data: PredictionCreate, db: Session = Depends(get_db)):
+
+    prediction = Prediction(
+        temperature=data.temperature,
+        humidity=data.humidity,
+        power_consumption=data.power_consumption,
+        prediction=data.prediction
+    )
+
+    db.add(prediction)
+    db.commit()
+    db.refresh(prediction)
+
+    return {
+        "message": "Prediction saved successfully",
+        "id": prediction.id
+    }
+
+
+@app.get("/prediction/all")
+def get_predictions(db: Session = Depends(get_db)):
+    return db.query(Prediction).all()
+
+@app.post("/feedback")
+def create_feedback(data: FeedbackCreate, db: Session = Depends(get_db)):
+
+    feedback = Feedback(
+        user_name=data.user_name,
+        comments=data.comments,
+        rating=data.rating
+    )
+
+    db.add(feedback)
+    db.commit()
+    db.refresh(feedback)
+
+    return {
+        "message": "Feedback added successfully",
+        "id": feedback.id
+    }
+
+
+@app.get("/feedback/all")
+def get_feedback(db: Session = Depends(get_db)):
+    return db.query(Feedback).all()    
 

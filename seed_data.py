@@ -4,6 +4,8 @@ from backend.database.connection import SessionLocal
 from backend.models.machine import Machine
 from backend.models.telemetry import Telemetry
 from backend.models.maintenance import Maintenance
+from backend.models.prediction import Prediction
+from backend.models.feedback import Feedback
 
 db = SessionLocal()
 
@@ -92,3 +94,29 @@ print("100 maintenance records created.")
 db.close()
 
 print("\nDatabase populated successfully.")
+
+for _ in range(20):
+
+    prediction = Prediction(
+        temperature=30,
+        humidity=45,
+        power_consumption=12,
+        prediction="Charging Station Healthy"
+    )
+
+    db.add(prediction)
+
+for i in range(10):
+
+    feedback = Feedback(
+        user_name=f"User {i}",
+        comments="Excellent Service",
+        rating=5
+    )
+
+    db.add(feedback)
+
+db.commit()
+db.close()
+
+print("20 predictions and 10 feedback added.")
