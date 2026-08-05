@@ -6,6 +6,7 @@ from backend.models.telemetry import Telemetry
 from backend.models.maintenance import Maintenance
 from backend.models.prediction import Prediction
 from backend.models.feedback import Feedback
+from backend.models.operator import Operator
 
 db = SessionLocal()
 
@@ -13,21 +14,9 @@ db = SessionLocal()
 # Create Charging Stations
 # -----------------------
 
-charger_types = [
-    "AC Level 2",
-    "DC Fast Charger",
-    "CCS",
-    "CHAdeMO",
-    "Type 2"
-]
+charger_types = ["AC Level 2", "DC Fast Charger", "CCS", "CHAdeMO", "Type 2"]
 
-locations = [
-    "Hyderabad",
-    "Visakhapatnam",
-    "Vijayawada",
-    "Bengaluru",
-    "Chennai"
-]
+locations = ["Hyderabad", "Visakhapatnam", "Vijayawada", "Bengaluru", "Chennai"]
 
 print("Creating charging stations...")
 
@@ -35,7 +24,7 @@ for i in range(1, 51):
     charging_station = Machine(
         station_name=f"Charging Station {i}",
         charger_type=choice(charger_types),
-        location=choice(locations)
+        location=choice(locations),
     )
 
     db.add(charging_station)
@@ -56,7 +45,7 @@ for _ in range(500):
         charging_station_id=randint(1, 50),
         temperature=round(uniform(25, 45), 2),
         humidity=round(uniform(30, 60), 2),
-        power_consumption=round(uniform(10, 30), 2)
+        power_consumption=round(uniform(10, 30), 2),
     )
 
     db.add(telemetry)
@@ -69,11 +58,7 @@ print("500 telemetry records created.")
 # Create 100 Maintenance Records
 # -----------------------
 
-statuses = [
-    "Completed",
-    "Pending",
-    "Scheduled"
-]
+statuses = ["Completed", "Pending", "Scheduled"]
 
 print("Creating maintenance records...")
 
@@ -82,7 +67,7 @@ for i in range(100):
     maintenance = Maintenance(
         charging_station_id=randint(1, 50),
         maintenance_date=f"2026-07-{(i % 30) + 1:02d}",
-        status=choice(statuses)
+        status=choice(statuses),
     )
 
     db.add(maintenance)
@@ -101,22 +86,51 @@ for _ in range(20):
         temperature=30,
         humidity=45,
         power_consumption=12,
-        prediction="Charging Station Healthy"
+        prediction="Charging Station Healthy",
     )
 
     db.add(prediction)
 
 for i in range(10):
 
-    feedback = Feedback(
-        user_name=f"User {i}",
-        comments="Excellent Service",
-        rating=5
-    )
+    feedback = Feedback(user_name=f"User {i}", comments="Excellent Service", rating=5)
 
     db.add(feedback)
 
+operators = [
+    Operator(
+        name="Rahul Sharma",
+        email="rahul@example.com",
+        phone="9876543210",
+        shift="Morning",
+    ),
+    Operator(
+        name="Priya Nair",
+        email="priya@example.com",
+        phone="9876543211",
+        shift="Evening",
+    ),
+    Operator(
+        name="Arjun Kumar", email="arjun@example.com", phone="9876543212", shift="Night"
+    ),
+    Operator(
+        name="Sneha Reddy",
+        email="sneha@example.com",
+        phone="9876543213",
+        shift="Morning",
+    ),
+    Operator(
+        name="Kiran Patel",
+        email="kiran@example.com",
+        phone="9876543214",
+        shift="Evening",
+    ),
+]
+
+db.add_all(operators)
+
+# Existing code
 db.commit()
 db.close()
 
-print("20 predictions and 10 feedback added.")
+print("20 predictions, 10 feedback and 5 operators added.")

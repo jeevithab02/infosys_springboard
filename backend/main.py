@@ -1,9 +1,6 @@
-<<<<<<< HEAD:backend/api/main.py
-=======
 from backend.models import machine
 
 # pyrefly: ignore [missing-import]
->>>>>>> 66f90ed (Added Operator module):backend/main.py
 from fastapi import FastAPI
 from backend.database.connection import engine, Base
 from backend.models.user import User
@@ -16,6 +13,8 @@ from backend.schemas.telemetry import TelemetryCreate
 
 # pyrefly: ignore [missing-import]
 from fastapi import Depends
+
+# pyrefly: ignore [missing-import]
 from sqlalchemy.orm import Session
 from backend.models.maintenance import Maintenance
 
@@ -26,18 +25,15 @@ from backend.database.connection import get_db
 from backend.schemas.user import UserCreate
 from backend.ml.predict import predict_failure
 from backend.schemas.predict import PredictionInput
-<<<<<<< HEAD:backend/api/main.py
+
+from backend.models.operator import Operator
+from backend.schemas.operator import OperatorCreate
+
 from backend.models.prediction import Prediction
-# pyrefly: ignore [missing-import]
 from backend.schemas.prediction import PredictionCreate
 
 from backend.models.feedback import Feedback
-# pyrefly: ignore [missing-import]
-from backend.schemas.feedback import FeedbackCreate 
-=======
-from backend.models.operator import Operator
-from backend.schemas.operator import OperatorCreate
->>>>>>> 66f90ed (Added Operator module):backend/main.py
+from backend.schemas.feedback import FeedbackCreate
 
 Base.metadata.create_all(bind=engine)
 
@@ -179,55 +175,6 @@ def create_operator(operator: OperatorCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_operator)
 
-<<<<<<< HEAD:backend/api/main.py
-@app.post("/prediction")
-def create_prediction(data: PredictionCreate, db: Session = Depends(get_db)):
-
-    prediction = Prediction(
-        temperature=data.temperature,
-        humidity=data.humidity,
-        power_consumption=data.power_consumption,
-        prediction=data.prediction
-    )
-
-    db.add(prediction)
-    db.commit()
-    db.refresh(prediction)
-
-    return {
-        "message": "Prediction saved successfully",
-        "id": prediction.id
-    }
-
-
-@app.get("/prediction/all")
-def get_predictions(db: Session = Depends(get_db)):
-    return db.query(Prediction).all()
-
-@app.post("/feedback")
-def create_feedback(data: FeedbackCreate, db: Session = Depends(get_db)):
-
-    feedback = Feedback(
-        user_name=data.user_name,
-        comments=data.comments,
-        rating=data.rating
-    )
-
-    db.add(feedback)
-    db.commit()
-    db.refresh(feedback)
-
-    return {
-        "message": "Feedback added successfully",
-        "id": feedback.id
-    }
-
-
-@app.get("/feedback/all")
-def get_feedback(db: Session = Depends(get_db)):
-    return db.query(Feedback).all()    
-
-=======
     return {"message": "Operator added successfully", "id": new_operator.id}
 
 
@@ -264,4 +211,46 @@ def update_operator(
     db.refresh(existing_operator)
 
     return {"message": "Operator updated successfully", "operator": existing_operator}
->>>>>>> 66f90ed (Added Operator module):backend/main.py
+
+
+@app.post("/prediction")
+def create_prediction(data: PredictionCreate, db: Session = Depends(get_db)):
+
+    prediction = Prediction(
+        temperature=data.temperature,
+        humidity=data.humidity,
+        power_consumption=data.power_consumption,
+        prediction=data.prediction,
+    )
+
+    db.add(prediction)
+    db.commit()
+    db.refresh(prediction)
+
+    return {"message": "Prediction saved successfully", "id": prediction.id}
+
+
+@app.get("/prediction/all")
+def get_predictions(db: Session = Depends(get_db)):
+
+    return db.query(Prediction).all()
+
+
+@app.post("/feedback")
+def create_feedback(data: FeedbackCreate, db: Session = Depends(get_db)):
+
+    feedback = Feedback(
+        user_name=data.user_name, comments=data.comments, rating=data.rating
+    )
+
+    db.add(feedback)
+    db.commit()
+    db.refresh(feedback)
+
+    return {"message": "Feedback added successfully", "id": feedback.id}
+
+
+@app.get("/feedback/all")
+def get_feedback(db: Session = Depends(get_db)):
+
+    return db.query(Feedback).all()
