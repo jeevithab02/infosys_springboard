@@ -27,11 +27,13 @@ from backend.ml.predict import predict_failure
 from backend.schemas.predict import PredictionInput
 from backend.models.failure_history import FailureHistory
 from backend.schemas.failure_history import FailureHistoryCreate
+from backend.api.alert import router as alert_router
 
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="EV Charging Station Health Monitoring API", version="1.0")
+app.include_router(alert_router)
 
 
 @app.get("/")
