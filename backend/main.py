@@ -35,6 +35,9 @@ from backend.schemas.prediction import PredictionCreate
 from backend.models.feedback import Feedback
 from backend.schemas.feedback import FeedbackCreate
 
+from backend.models.failure_history import FailureHistory
+from backend.schemas.failure_history import FailureHistoryCreate
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="EV Charging Station Health Monitoring API", version="1.0")
@@ -254,3 +257,33 @@ def create_feedback(data: FeedbackCreate, db: Session = Depends(get_db)):
 def get_feedback(db: Session = Depends(get_db)):
 
     return db.query(Feedback).all()
+
+@app.post("/failure-history")
+def create_failure_history(data: FailureHistoryCreate, db: Session = Depends(get_db)):
+
+    failure = FailureHistory(
+        charging_station_id=data.charging_station_id,
+        failure_type=data.failure_type,
+        description=data.description,
+        failure_date=data.failure_date,
+        resolved=data.resolved,
+    )
+
+    db.add(failure)
+    db.commit()
+    db.refresh(failure)
+
+    return {"message": "Failure History added successfully", "id": failure.id}
+
+
+@app.get("/failure-history/all")
+def get_all_failure_history(db: Session = Depends(get_db)):
+
+    failures = db.query(FailureHistory).all()
+
+    return failures
+
+
+@app.get("/failure-history")
+def get_failure_history():
+    return {"message": "Failure History API is working"}

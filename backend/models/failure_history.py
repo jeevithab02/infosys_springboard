@@ -11,7 +11,7 @@ from backend.database.connection import Base
 class FailureHistory(Base):
     __tablename__ = "failure_history"
 
-    id = Column(Integer, primary_primary_key=True, index=True, autoincrement=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     charging_station_id = Column(
         Integer, ForeignKey("charging_stations.id", ondelete="CASCADE"), nullable=False
     )
