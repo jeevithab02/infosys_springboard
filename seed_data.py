@@ -7,6 +7,7 @@ from backend.models.maintenance import Maintenance
 from backend.models.prediction import Prediction
 from backend.models.feedback import Feedback
 from backend.models.operator import Operator
+from backend.models.alert import Alert
 
 db = SessionLocal()
 
@@ -178,3 +179,38 @@ db.close()
 
 print("Failure History Seed Data Added Successfully")
 >>>>>>> 2940916 (Added user model schema and API)
+# -----------------------
+# Create 50 Alert Records
+# -----------------------
+
+alert_types = [
+    "High Temperature",
+    "High Humidity",
+    "High Power Consumption",
+    "Voltage Issue",
+    "Sensor Failure",
+]
+
+descriptions = [
+    "Temperature exceeded safe limit.",
+    "Humidity level is abnormal.",
+    "Power consumption is too high.",
+    "Voltage fluctuation detected.",
+    "Sensor is not responding.",
+]
+
+print("Creating alert records...")
+
+for _ in range(50):
+    alert = Alert(
+        charging_station_id=randint(1, 50),
+        alert_type=choice(alert_types),
+        description=choice(descriptions),
+        is_resolved=choice([True, False]),
+    )
+
+    db.add(alert)
+
+db.commit()
+
+print("50 alert records created.")
