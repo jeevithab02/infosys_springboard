@@ -4,10 +4,15 @@ from backend.database.connection import SessionLocal
 from backend.models.machine import Machine
 from backend.models.telemetry import Telemetry
 from backend.models.maintenance import Maintenance
+
+# pyrefly: ignore [missing-import]
 from backend.models.prediction import Prediction
+
+# pyrefly: ignore [missing-import]
 from backend.models.feedback import Feedback
+
+# pyrefly: ignore [missing-import]
 from backend.models.operator import Operator
-from backend.models.alert import Alert
 
 db = SessionLocal()
 
@@ -81,7 +86,6 @@ db.close()
 
 print("\nDatabase populated successfully.")
 
-<<<<<<< HEAD
 for _ in range(20):
 
     prediction = Prediction(
@@ -136,7 +140,7 @@ db.commit()
 db.close()
 
 print("20 predictions, 10 feedback and 5 operators added.")
-=======
+
 from backend.database.connection import SessionLocal
 from backend.models.failure_history import FailureHistory
 
@@ -144,30 +148,30 @@ db = SessionLocal()
 
 records = [
     FailureHistory(
-        charging_station_id=101,
+        charging_station_id=1,
         failure_type="Power Failure",
-        description="Unexpected power outage while charging.",
-        failure_date="2026-07-10",
+        description="Station lost power during charging.",
+        failure_date="2026-07-05",
         resolved="Yes",
     ),
     FailureHistory(
-        charging_station_id=102,
+        charging_station_id=2,
         failure_type="Connector Fault",
         description="Charging connector damaged.",
-        failure_date="2026-07-14",
+        failure_date="2026-07-15",
         resolved="No",
     ),
     FailureHistory(
-        charging_station_id=103,
+        charging_station_id=3,
         failure_type="Communication Error",
-        description="Station lost connection to server.",
-        failure_date="2026-07-20",
+        description="Unable to connect to server.",
+        failure_date="2026-07-22",
         resolved="Yes",
     ),
     FailureHistory(
-        charging_station_id=104,
-        failure_type="Battery Overheating",
-        description="Temperature exceeded safety threshold.",
+        charging_station_id=4,
+        failure_type="Overheating",
+        description="Charging station overheated.",
         failure_date="2026-08-01",
         resolved="No",
     ),
@@ -177,40 +181,4 @@ db.add_all(records)
 db.commit()
 db.close()
 
-print("Failure History Seed Data Added Successfully")
->>>>>>> 2940916 (Added user model schema and API)
-# -----------------------
-# Create 50 Alert Records
-# -----------------------
-
-alert_types = [
-    "High Temperature",
-    "High Humidity",
-    "High Power Consumption",
-    "Voltage Issue",
-    "Sensor Failure",
-]
-
-descriptions = [
-    "Temperature exceeded safe limit.",
-    "Humidity level is abnormal.",
-    "Power consumption is too high.",
-    "Voltage fluctuation detected.",
-    "Sensor is not responding.",
-]
-
-print("Creating alert records...")
-
-for _ in range(50):
-    alert = Alert(
-        charging_station_id=randint(1, 50),
-        alert_type=choice(alert_types),
-        description=choice(descriptions),
-        is_resolved=choice([True, False]),
-    )
-
-    db.add(alert)
-
-db.commit()
-
-print("50 alert records created.")
+print("Failure History Seeded Successfully")
