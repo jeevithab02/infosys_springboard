@@ -41,6 +41,12 @@ from backend.schemas.failure_history import FailureHistoryCreate
 from backend.models.alert import Alert
 from backend.schemas.alert import AlertCreate, AlertResponse
 
+from backend.models.charging_session import ChargingSession
+from backend.schemas.charging_session import (
+    ChargingSessionCreate,
+    ChargingSessionResponse,
+)
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="EV Charging Station Health Monitoring API", version="1.0")
@@ -318,3 +324,43 @@ def get_all_alerts(db: Session = Depends(get_db)):
 @app.get("/alerts", response_model=dict)
 def get_alerts():
     return {"message": "Alert API is working"}
+
+# -----------------------
+# Charging Session APIs
+# -----------------------
+
+@app.post("/charging-session", response_model=ChargingSessionResponse)
+def create_charging_session(
+    session: ChargingSessionCreate,
+    db: Session = Depends(get_db)
+):
+
+    new_session = ChargingSession(
+        station_id=session.station_id,
+        vehicle_id=session.vehicle_id,
+        start_time=session.start_time,
+        end_time=session.end_time,
+        energy_consumed=session.energy_consumed,
+        cost=session.cost
+    )
+
+    db.add(new_session)
+    db.commit()
+    db.refresh(new_session)
+
+    return new_session
+
+
+@app.get("/charging-session/all", response_model=list[ChargingSessionResponse])
+def get_all_charging_sessions(db: Session = Depends(get_db)):
+
+    sessions = db.query(ChargingSession).all()
+
+    return sessions
+
+
+@app.get("/charging-session")
+def get_charging_session():
+    return {
+        "message": "Charging Session API is working"
+    }

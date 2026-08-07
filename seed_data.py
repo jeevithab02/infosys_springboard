@@ -16,6 +16,9 @@ from backend.models.operator import Operator
 
 from backend.models.alert import Alert
 
+from datetime import datetime, timedelta
+from backend.models.charging_session import ChargingSession
+
 db = SessionLocal()
 
 # -----------------------
@@ -143,6 +146,35 @@ db.close()
 
 print("20 predictions, 10 feedback and 5 operators added.")
 
+# -----------------------
+# Create 200 Charging Session Records
+# -----------------------
+
+print("Creating charging session records...")
+
+base_time = datetime(2026, 8, 1, 8, 0)
+
+for i in range(200):
+
+    start = base_time + timedelta(minutes=i * 45)
+    duration = randint(20, 90)
+    end = start + timedelta(minutes=duration)
+
+    session = ChargingSession(
+        station_id=randint(1, 50),
+        vehicle_id=f"TN{randint(10,99)}EV{1000+i}",
+        start_time=start,
+        end_time=end,
+        energy_consumed=round(uniform(10, 60), 2),
+        cost=round(uniform(150, 900), 2)
+    )
+
+    db.add(session)
+
+db.commit()
+
+print("200 charging session records created.")
+
 from backend.database.connection import SessionLocal
 from backend.models.failure_history import FailureHistory
 
@@ -220,5 +252,7 @@ for _ in range(50):
 db.commit()
 
 print("50 alert records created.")
+
+
 
 db.close()
