@@ -14,6 +14,8 @@ from backend.models.feedback import Feedback
 # pyrefly: ignore [missing-import]
 from backend.models.operator import Operator
 
+from backend.models.alert import Alert
+
 db = SessionLocal()
 
 # -----------------------
@@ -179,6 +181,44 @@ records = [
 
 db.add_all(records)
 db.commit()
-db.close()
 
 print("Failure History Seeded Successfully")
+
+# -----------------------
+# Create 50 Alert Records
+# -----------------------
+
+alert_types = [
+    "High Temperature",
+    "High Humidity",
+    "High Power Consumption",
+    "Voltage Issue",
+    "Sensor Failure",
+]
+
+descriptions = [
+    "Temperature exceeded safe limit.",
+    "Humidity level is abnormal.",
+    "Power consumption is too high.",
+    "Voltage fluctuation detected.",
+    "Sensor is not responding.",
+]
+
+print("Creating alert records...")
+
+for _ in range(50):
+
+    alert = Alert(
+        charging_station_id=randint(1, 50),
+        alert_type=choice(alert_types),
+        description=choice(descriptions),
+        is_resolved=choice([True, False]),
+    )
+
+    db.add(alert)
+
+db.commit()
+
+print("50 alert records created.")
+
+db.close()
