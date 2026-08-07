@@ -38,6 +38,9 @@ from backend.schemas.feedback import FeedbackCreate
 from backend.models.failure_history import FailureHistory
 from backend.schemas.failure_history import FailureHistoryCreate
 
+from backend.models.alert import Alert
+from backend.schemas.alert import AlertCreate, AlertResponse
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="EV Charging Station Health Monitoring API", version="1.0")
@@ -258,6 +261,7 @@ def get_feedback(db: Session = Depends(get_db)):
 
     return db.query(Feedback).all()
 
+
 @app.post("/failure-history")
 def create_failure_history(data: FailureHistoryCreate, db: Session = Depends(get_db)):
 
@@ -287,3 +291,30 @@ def get_all_failure_history(db: Session = Depends(get_db)):
 @app.get("/failure-history")
 def get_failure_history():
     return {"message": "Failure History API is working"}
+
+
+@app.post("/alerts", response_model=dict)
+def create_alert(alert_data: AlertCreate, db: Session = Depends(get_db)):
+    new_alert = Alert(
+        charging_station_id=alert_data.charging_station_id,
+        alert_type=alert_data.alert_type,
+        description=alert_data.description,
+        is_resolved=alert_data.is_resolved,
+    )
+
+    db.add(new_alert)
+    db.commit()
+    db.refresh(new_alert)
+
+    return {"message": "Alert added successfully", "id": new_alert.id}
+
+
+@app.get("/alerts/all", response_model=list[AlertResponse])
+def get_all_alerts(db: Session = Depends(get_db)):
+    alerts = db.query(Alert).all()
+    return alerts
+
+
+@app.get("/alerts", response_model=dict)
+def get_alerts():
+    return {"message": "Alert API is working"}
