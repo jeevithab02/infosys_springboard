@@ -1,22 +1,30 @@
+from datetime import datetime
+
 # pyrefly: ignore [missing-import]
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class FailureHistoryCreate(BaseModel):
     charging_station_id: int
     failure_type: str
-    description: str
-    failure_date: str
-    resolved: str
+    description: str | None = None
+    failure_date: datetime
+    resolved: str = "No"
+
+
+class FailureHistoryUpdate(BaseModel):
+    failure_type: str | None = None
+    description: str | None = None
+    failure_date: datetime | None = None
+    resolved: str | None = None
 
 
 class FailureHistoryResponse(BaseModel):
     id: int
     charging_station_id: int
     failure_type: str
-    description: str
-    failure_date: str
+    description: str | None
+    failure_date: datetime
     resolved: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

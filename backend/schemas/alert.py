@@ -1,13 +1,20 @@
-from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional
+
+# pyrefly: ignore [missing-import]
+from pydantic import BaseModel, ConfigDict
 
 
 class AlertCreate(BaseModel):
     charging_station_id: int
     alert_type: str
     description: str
-    is_resolved: Optional[bool] = False
+    is_resolved: bool = False
+
+
+class AlertUpdate(BaseModel):
+    alert_type: str | None = None
+    description: str | None = None
+    is_resolved: bool | None = None
 
 
 class AlertResponse(BaseModel):
@@ -18,5 +25,4 @@ class AlertResponse(BaseModel):
     is_resolved: bool
     timestamp: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
