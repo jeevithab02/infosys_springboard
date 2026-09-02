@@ -1,15 +1,17 @@
 # pyrefly: ignore [missing-import]
 import streamlit as st
+
+# pyrefly: ignore [import-error]
 import requests
 
 BACKEND_URL = "http://127.0.0.1:8000"
 
 
 def login():
+
     st.markdown(
         """
-        <div class="login-header">
-            <div class="login-icon">⚡</div>
+        <div class="auth-header">
             <h1>EV Health Monitor</h1>
             <p>EV Charging Station Health Monitoring</p>
         </div>
@@ -17,58 +19,88 @@ def login():
         unsafe_allow_html=True,
     )
 
-    with st.form("login_form"):
-        email = st.text_input("Email", placeholder="Enter your email")
+    # Center the login form
+    left, center, right = st.columns([1, 1.5, 1])
 
-        password = st.text_input(
-            "Password", type="password", placeholder="Enter your password"
-        )
+    with center:
 
-        submitted = st.form_submit_button("Login", use_container_width=True)
+        with st.form("login_form"):
 
-        if submitted:
-            if not email or not password:
-                st.error("Please enter both email and password.")
-                return
+            email = st.text_input(
+                "Email",
+                placeholder="Enter your email",
+            )
 
-            try:
-                response = requests.post(
-                    f"{BACKEND_URL}/login",
-                    json={"email": email, "password": password},
-                    timeout=5,
-                )
+            password = st.text_input(
+                "Password",
+                type="password",
+                placeholder="Enter your password",
+            )
 
-                if response.status_code == 200:
-                    user = response.json()
+            submitted = st.form_submit_button(
+                "Login",
+                use_container_width=True,
+            )
 
-                    st.session_state.logged_in = True
-                    st.session_state.user = user
+            if submitted:
 
-                    st.rerun()
+                if not email or not password:
+                    st.error("Please enter both email and password.")
+                    return
 
-                elif response.status_code == 401:
-                    st.error("Invalid email or password.")
+                try:
 
-                else:
-                    st.error(f"Login failed. Status code: " f"{response.status_code}")
+                    response = requests.post(
+                        f"{BACKEND_URL}/login",
+                        json={
+                            "email": email,
+                            "password": password,
+                        },
+                        timeout=5,
+                    )
 
-            except requests.exceptions.RequestException:
-                st.error(
-                    "Unable to connect to the backend. " "Make sure FastAPI is running."
-                )
+                    if response.status_code == 200:
 
-    st.write("")
+                        user = response.json()
 
-    if st.button("Don't have an account? Sign Up"):
-        st.session_state.auth_page = "signup"
-        st.rerun()
+                        st.session_state.logged_in = True
+                        st.session_state.user = user
+
+                        st.rerun()
+
+                    elif response.status_code == 401:
+
+                        st.error("Invalid email or password.")
+
+                    else:
+
+                        st.error(
+                            f"Login failed. Status code: " f"{response.status_code}"
+                        )
+
+                except requests.exceptions.RequestException:
+
+                    st.error(
+                        "Unable to connect to the backend. "
+                        "Make sure FastAPI is running."
+                    )
+
+        st.write("")
+
+        if st.button(
+            "Don't have an account?  Sign Up",
+            use_container_width=True,
+        ):
+
+            st.session_state.auth_page = "signup"
+            st.rerun()
 
 
 def signup():
+
     st.markdown(
         """
-        <div class="login-header">
-            <div class="login-icon">⚡</div>
+        <div class="auth-header">
             <h1>Create Account</h1>
             <p>EV Charging Station Health Monitoring</p>
         </div>
@@ -76,69 +108,110 @@ def signup():
         unsafe_allow_html=True,
     )
 
-    with st.form("signup_form"):
+    # Center the signup form
+    left, center, right = st.columns([1, 1.5, 1])
 
-        name = st.text_input("Name", placeholder="Enter your name")
+    with center:
 
-        email = st.text_input("Email", placeholder="Enter your email")
+        with st.form("signup_form"):
 
-        password = st.text_input(
-            "Password", type="password", placeholder="Create a password"
-        )
+            name = st.text_input(
+                "Name",
+                placeholder="Enter your name",
+            )
 
-        confirm_password = st.text_input(
-            "Confirm Password", type="password", placeholder="Re-enter your password"
-        )
+            email = st.text_input(
+                "Email",
+                placeholder="Enter your email",
+            )
 
-        submitted = st.form_submit_button("Create Account", use_container_width=True)
+            password = st.text_input(
+                "Password",
+                type="password",
+                placeholder="Create a password",
+            )
 
-        if submitted:
+            confirm_password = st.text_input(
+                "Confirm Password",
+                type="password",
+                placeholder="Re-enter your password",
+            )
 
-            if not name or not email or not password:
-                st.error("Please fill in all required fields.")
-                return
+            submitted = st.form_submit_button(
+                "Create Account",
+                use_container_width=True,
+            )
 
-            if password != confirm_password:
-                st.error("Passwords do not match.")
-                return
+            if submitted:
 
-            try:
-                response = requests.post(
-                    f"{BACKEND_URL}/users",
-                    json={"name": name, "email": email, "password": password},
-                    timeout=5,
-                )
+                if not name or not email or not password:
+                    st.error("Please fill in all required fields.")
+                    return
 
-                if response.status_code in (200, 201):
+                if password != confirm_password:
+                    st.error("Passwords do not match.")
+                    return
 
-                    st.success("Account created successfully!")
+                try:
 
-                    st.session_state.auth_page = "login"
-                    st.rerun()
+                    response = requests.post(
+                        f"{BACKEND_URL}/users",
+                        json={
+                            "name": name,
+                            "email": email,
+                            "password": password,
+                        },
+                        timeout=5,
+                    )
 
-                elif response.status_code == 400:
+                    if response.status_code in (200, 201):
 
-                    st.error("An account with this email already exists.")
+                        st.success("Account created successfully!")
 
-                else:
+                        st.session_state.auth_page = "login"
+                        st.rerun()
 
-                    try:
-                        detail = response.json().get(
-                            "detail", "Unable to create account."
-                        )
-                    except Exception:
-                        detail = "Unable to create account."
+                    elif response.status_code == 400:
 
-                    st.error(detail)
+                        st.error("An account with this email already exists.")
 
-            except requests.exceptions.RequestException:
+                    else:
 
-                st.error(
-                    "Unable to connect to the backend. " "Make sure FastAPI is running."
-                )
+                        try:
 
-    st.write("")
+                            detail = response.json().get(
+                                "detail",
+                                "Unable to create account.",
+                            )
 
-    if st.button("Already have an account? Login"):
+                        except Exception:
+
+                            detail = "Unable to create account."
+
+                        st.error(detail)
+
+                except requests.exceptions.RequestException:
+
+                    st.error(
+                        "Unable to connect to the backend. "
+                        "Make sure FastAPI is running."
+                    )
+
+        st.write("")
+
+        if st.button(
+            "Already have an account?  Login",
+            use_container_width=True,
+        ):
+
+            st.session_state.auth_page = "login"
+            st.rerun()
+
+
+def require_login():
+
+    if not st.session_state.get("logged_in", False):
+
         st.session_state.auth_page = "login"
-        st.rerun()
+
+        st.switch_page("app.py")

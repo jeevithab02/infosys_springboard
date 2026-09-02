@@ -4,103 +4,162 @@ import streamlit as st
 
 def render_sidebar():
 
-    user = st.session_state.get("user")
-
     with st.sidebar:
+
+        # =========================
+        # Brand
+        # =========================
 
         st.markdown(
             """
             <div class="brand">
-                <div class="brand-icon">⚡</div>
-                <div>
-                    <h2>EV HEALTH</h2>
-                    <p>Station Monitor</p>
+                <div class="brand-icon">EV</div>
+                <div class="brand-text">
+                    <div class="brand-title">EV HEALTH</div>
+                    <div class="brand-subtitle">Station Monitor</div>
                 </div>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-        st.divider()
+        st.markdown(
+            "<div class='sidebar-divider'></div>",
+            unsafe_allow_html=True,
+        )
+
+        # =========================
+        # Dashboard
+        # =========================
 
         st.page_link(
             "app.py",
             label="Dashboard",
-            icon="📊",
         )
 
-        st.markdown("##### MONITORING")
+        # =========================
+        # Monitoring
+        # =========================
+
+        st.markdown(
+            "<div class='sidebar-section'>MONITORING</div>",
+            unsafe_allow_html=True,
+        )
 
         st.page_link(
             "pages/stations.py",
             label="Charging Stations",
-            icon="⚡",
         )
 
         st.page_link(
             "pages/alerts.py",
             label="Alerts",
-            icon="🚨",
         )
 
         st.page_link(
             "pages/failures.py",
             label="Failure History",
-            icon="⚠️",
         )
 
-        st.markdown("##### OPERATIONS")
+        # =========================
+        # Operations
+        # =========================
+
+        st.markdown(
+            "<div class='sidebar-section'>OPERATIONS</div>",
+            unsafe_allow_html=True,
+        )
 
         st.page_link(
             "pages/maintenance.py",
             label="Maintenance",
-            icon="🔧",
         )
 
         st.page_link(
             "pages/sessions.py",
             label="Charging Sessions",
-            icon="🔋",
         )
 
         st.page_link(
             "pages/operators.py",
             label="Operators",
-            icon="👥",
         )
 
-        st.markdown("##### ANALYTICS")
+        # =========================
+        # Analytics
+        # =========================
+
+        st.markdown(
+            "<div class='sidebar-section'>ANALYTICS</div>",
+            unsafe_allow_html=True,
+        )
 
         st.page_link(
             "pages/analytics.py",
             label="Station Analytics",
-            icon="📈",
         )
 
-        st.markdown("##### AI")
+        # =========================
+        # AI
+        # =========================
+
+        st.markdown(
+            "<div class='sidebar-section'>AI</div>",
+            unsafe_allow_html=True,
+        )
 
         st.page_link(
             "pages/prediction.py",
             label="Predictive Maintenance",
-            icon="🤖",
+        )
+
+        # =========================
+        # Feedback
+        # =========================
+
+        st.markdown(
+            "<div class='sidebar-section'>FEEDBACK</div>",
+            unsafe_allow_html=True,
         )
 
         st.page_link(
             "pages/feedback.py",
             label="Feedback",
-            icon="💬",
         )
 
-        st.divider()
+        # =========================
+        # Signed-in User
+        # =========================
 
-        if user:
-            st.caption(f"Signed in as")
-            st.write(f"**{user.get('name', 'User')}**")
+        st.markdown(
+            "<div class='sidebar-bottom'></div>",
+            unsafe_allow_html=True,
+        )
+
+        user = st.session_state.get("user", {})
+        name = user.get("name", "User")
+
+        st.markdown(
+            f"""
+            <div class="signed-in">
+                <div class="signed-label">SIGNED IN AS</div>
+                <div class="signed-name">{name}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        # =========================
+        # Logout
+        # =========================
 
         if st.button(
             "Logout",
+            key="sidebar_logout",
             use_container_width=True,
         ):
             st.session_state.logged_in = False
             st.session_state.user = None
-            st.rerun()
+            st.session_state.auth_page = "login"
+
+            st.switch_page("app.py")
