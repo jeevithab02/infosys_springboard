@@ -1,10 +1,13 @@
 # pyrefly: ignore [missing-import]
 import streamlit as st
 
+from collections import Counter
+
 from api import get_api
 from style import load_css
 from auth import require_login
 from components.sidebar import render_sidebar
+from charts import bar_chart
 
 st.set_page_config(
     page_title="Failure History",
@@ -71,6 +74,42 @@ with col3:
 
 
 st.divider()
+
+
+# =============================
+# Failure Distribution
+# =============================
+
+if failures:
+
+    type_counts = Counter(
+        failure.get("failure_type", "Unknown") for failure in failures
+    )
+
+    st.markdown(
+        """
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <div>
+                    <h4>Failure Distribution</h4>
+                    <p>Recorded failures by type</p>
+                </div>
+            </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    fig = bar_chart(
+        list(type_counts.keys()),
+        list(type_counts.values()),
+        color="#3b82e5",
+    )
+
+    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    st.write("")
 
 
 # =============================
@@ -156,9 +195,9 @@ for failure in filtered_failures:
     resolved = failure.get("resolved")
 
     if resolved == "Yes":
-        status_text = "🟢 Resolved"
+        status_text = "<span class='dot dot-success'></span>Resolved"
     else:
-        status_text = "🔴 Unresolved"
+        status_text = "<span class='dot dot-danger'></span>Unresolved"
 
     with st.container(border=True):
 
@@ -174,7 +213,10 @@ for failure in filtered_failures:
 
         with failure_col2:
 
-            st.markdown(f"**{status_text}**")
+            st.markdown(
+                f"<strong>{status_text}</strong>",
+                unsafe_allow_html=True,
+            )
 
             failure_date = failure.get("failure_date", "")
 

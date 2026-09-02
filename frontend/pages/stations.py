@@ -17,7 +17,7 @@ if not st.session_state.get("logged_in", False):
 
 render_sidebar()
 
-st.title(" Charging Stations")
+st.title("Charging Stations")
 st.caption("Monitor and view all registered EV charging stations.")
 
 # Get stations from backend

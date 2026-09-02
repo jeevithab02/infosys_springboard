@@ -27,7 +27,7 @@ render_sidebar()
 # Header
 # =============================
 
-st.title(" User Feedback")
+st.title("User Feedback")
 
 st.caption(
     "Share feedback about charging stations and help improve "
@@ -198,7 +198,7 @@ if feedback_list:
 
         rating_value = feedback.get("rating", 0)
 
-        stars = "⭐" * rating_value
+        stars = "★" * rating_value + "☆" * (5 - rating_value)
 
         comments_text = feedback.get("comments")
 
@@ -219,7 +219,10 @@ if feedback_list:
 
             with col2:
 
-                st.markdown(f"### {stars}")
+                st.markdown(
+                    f"<div class='rating-stars'>{stars}</div>",
+                    unsafe_allow_html=True,
+                )
 
 else:
 

@@ -37,6 +37,12 @@ def login():
                 placeholder="Enter your password",
             )
 
+            role = st.radio(
+                "Login as",
+                options=["User", "Admin"],
+                horizontal=True,
+            )
+
             submitted = st.form_submit_button(
                 "Login",
                 use_container_width=True,
@@ -62,6 +68,7 @@ def login():
                     if response.status_code == 200:
 
                         user = response.json()
+                        user["role"] = role
 
                         st.session_state.logged_in = True
                         st.session_state.user = user

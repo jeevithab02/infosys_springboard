@@ -6,6 +6,7 @@ from style import load_css
 from auth import require_login
 from components.sidebar import render_sidebar
 from auth import require_login
+from charts import donut_chart
 
 st.set_page_config(
     page_title="Alerts",
@@ -24,7 +25,7 @@ render_sidebar()
 # Header
 # =============================
 
-st.title(" Alerts")
+st.title("Alerts")
 st.caption("Monitor and review charging station alerts.")
 
 
@@ -65,6 +66,38 @@ with col3:
 
 
 st.divider()
+
+
+# =============================
+# Alert Distribution
+# =============================
+
+if total_alerts:
+
+    st.markdown(
+        """
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <div>
+                    <h4>Alert Distribution</h4>
+                    <p>Resolved vs unresolved alerts</p>
+                </div>
+            </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    fig = donut_chart(
+        ["Resolved", "Unresolved"],
+        [len(resolved_alerts), len(unresolved_alerts)],
+        colors=["#20c563", "#e5484d"],
+    )
+
+    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    st.write("")
 
 
 # =============================
@@ -145,11 +178,11 @@ for alert in filtered_alerts:
 
     if is_resolved:
 
-        status_text = "🟢 Resolved"
+        status_text = "<span class='dot dot-success'></span>Resolved"
 
     else:
 
-        status_text = "🔴 Unresolved"
+        status_text = "<span class='dot dot-danger'></span>Unresolved"
 
     with st.container(border=True):
 
@@ -165,7 +198,10 @@ for alert in filtered_alerts:
 
         with alert_col2:
 
-            st.markdown(f"**{status_text}**")
+            st.markdown(
+                f"<strong>{status_text}</strong>",
+                unsafe_allow_html=True,
+            )
 
             timestamp = alert.get("timestamp", "")
 

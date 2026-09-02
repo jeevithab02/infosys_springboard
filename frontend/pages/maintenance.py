@@ -6,6 +6,7 @@ from style import load_css
 from auth import require_login
 from components.sidebar import render_sidebar
 from auth import require_login
+from charts import donut_chart
 
 st.set_page_config(
     page_title="Maintenance",
@@ -22,7 +23,7 @@ render_sidebar()
 # Header
 # =============================
 
-st.title(" Maintenance")
+st.title("Maintenance")
 st.caption("Track scheduled and completed charging station maintenance.")
 
 
@@ -70,6 +71,38 @@ with col4:
 
 
 st.divider()
+
+
+# =============================
+# Maintenance Status
+# =============================
+
+if total_maintenance:
+
+    st.markdown(
+        """
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <div>
+                    <h4>Maintenance Status</h4>
+                    <p>Pending vs scheduled vs completed</p>
+                </div>
+            </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    fig = donut_chart(
+        ["Pending", "Scheduled", "Completed"],
+        [len(pending), len(scheduled), len(completed)],
+        colors=["#e5a13b", "#3b82e5", "#20c563"],
+    )
+
+    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    st.write("")
 
 
 # =============================
@@ -169,14 +202,7 @@ for item in filtered_maintenance:
         f"Station {station_id}",
     )
 
-    status = item.get("status", "Unknown")
-
-    if status == "Completed":
-        display_status = "🟢 Completed"
-    elif status == "Scheduled":
-        display_status = "🔵 Scheduled"
-    else:
-        display_status = "🟡 Pending"
+    display_status = item.get("status", "Unknown")
 
     table_data.append(
         {

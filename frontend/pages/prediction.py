@@ -163,7 +163,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 # =========================================================
 
 if st.button(
-    "  Run Health Prediction",
+    "Run Health Prediction",
     type="primary",
     use_container_width=True,
 ):
@@ -246,11 +246,11 @@ if "last_prediction" in st.session_state:
 
     if "healthy" in result_text.lower():
 
-        st.success(f"🟢 **Charging Station Healthy**  \n" f"{result_text}")
+        st.success(f"**Charging Station Healthy**  \n" f"{result_text}")
 
     else:
 
-        st.error(f"🔴 **Potential Failure Detected**  \n" f"{result_text}")
+        st.error(f"**Potential Failure Detected**  \n" f"{result_text}")
 
     # -----------------------------------------------------
     # Prediction details

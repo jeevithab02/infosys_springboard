@@ -52,6 +52,39 @@ def render_sidebar():
         )
 
         st.page_link(
+            "pages/analytics.py",
+            label="Telemetry & Battery Health",
+        )
+
+        # =========================
+        # Intelligence
+        # =========================
+
+        st.markdown(
+            "<div class='sidebar-section'>INTELLIGENCE</div>",
+            unsafe_allow_html=True,
+        )
+
+        st.page_link(
+            "pages/prediction.py",
+            label="Predictions",
+        )
+
+        st.page_link(
+            "pages/maintenance.py",
+            label="Maintenance",
+        )
+
+        # =========================
+        # Incidents
+        # =========================
+
+        st.markdown(
+            "<div class='sidebar-section'>INCIDENTS</div>",
+            unsafe_allow_html=True,
+        )
+
+        st.page_link(
             "pages/alerts.py",
             label="Alerts",
         )
@@ -71,11 +104,6 @@ def render_sidebar():
         )
 
         st.page_link(
-            "pages/maintenance.py",
-            label="Maintenance",
-        )
-
-        st.page_link(
             "pages/sessions.py",
             label="Charging Sessions",
         )
@@ -83,43 +111,6 @@ def render_sidebar():
         st.page_link(
             "pages/operators.py",
             label="Operators",
-        )
-
-        # =========================
-        # Analytics
-        # =========================
-
-        st.markdown(
-            "<div class='sidebar-section'>ANALYTICS</div>",
-            unsafe_allow_html=True,
-        )
-
-        st.page_link(
-            "pages/analytics.py",
-            label="Station Analytics",
-        )
-
-        # =========================
-        # AI
-        # =========================
-
-        st.markdown(
-            "<div class='sidebar-section'>AI</div>",
-            unsafe_allow_html=True,
-        )
-
-        st.page_link(
-            "pages/prediction.py",
-            label="Predictive Maintenance",
-        )
-
-        # =========================
-        # Feedback
-        # =========================
-
-        st.markdown(
-            "<div class='sidebar-section'>FEEDBACK</div>",
-            unsafe_allow_html=True,
         )
 
         st.page_link(
@@ -138,12 +129,14 @@ def render_sidebar():
 
         user = st.session_state.get("user", {})
         name = user.get("name", "User")
+        role = user.get("role", "User")
 
         st.markdown(
             f"""
             <div class="signed-in">
                 <div class="signed-label">SIGNED IN AS</div>
                 <div class="signed-name">{name}</div>
+                <span class="signed-role">{role}</span>
             </div>
             """,
             unsafe_allow_html=True,

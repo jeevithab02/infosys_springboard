@@ -8,6 +8,7 @@ import streamlit as st
 from api import get_api
 from style import load_css
 from components.sidebar import render_sidebar
+from charts import multi_line_chart
 
 
 st.set_page_config(
@@ -28,7 +29,7 @@ render_sidebar()
 # Header
 # =============================
 
-st.title(" Station Analytics")
+st.title("Station Analytics")
 st.caption("View performance and operational analytics for charging stations.")
 
 
@@ -117,12 +118,61 @@ with overview_col3:
 
 
 # =============================
+# Telemetry & Battery Health Trend
+# =============================
+
+telemetry = get_api("/telemetry/all") or []
+
+station_telemetry = [
+    record
+    for record in telemetry
+    if record.get("charging_station_id") == selected_id
+]
+
+if station_telemetry:
+
+    st.write("")
+
+    st.markdown(
+        """
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <div>
+                    <h4>Telemetry & Battery Health</h4>
+                    <p>Temperature, humidity and power consumption over recorded readings</p>
+                </div>
+                <span class="chip chip-blue">Monitored</span>
+            </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    reading_numbers = list(range(1, len(station_telemetry) + 1))
+
+    series = {
+        "Temperature (°C)": [
+            record.get("temperature", 0) for record in station_telemetry
+        ],
+        "Humidity (%)": [record.get("humidity", 0) for record in station_telemetry],
+        "Power Consumption": [
+            record.get("power_consumption", 0) for record in station_telemetry
+        ],
+    }
+
+    fig = multi_line_chart(reading_numbers, series)
+
+    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
+# =============================
 # Charging Statistics
 # =============================
 
 st.divider()
 
-st.subheader("⚡ Charging Performance")
+st.subheader("Charging Performance")
 
 charge_col1, charge_col2, charge_col3 = st.columns(3)
 
@@ -151,7 +201,7 @@ with charge_col3:
 
 st.divider()
 
-st.subheader("🛠️ Health & Maintenance")
+st.subheader("Health & Maintenance")
 
 health_col1, health_col2, health_col3, health_col4 = st.columns(4)
 
@@ -200,11 +250,11 @@ with maintenance_col2:
 
     if unresolved_failures > 0:
         st.warning(
-            f"⚠️ {unresolved_failures} unresolved failure(s) "
+            f"{unresolved_failures} unresolved failure(s) "
             "recorded for this station."
         )
     else:
-        st.success("✓ No unresolved failures recorded.")
+        st.success("No unresolved failures recorded.")
 
 
 # =============================

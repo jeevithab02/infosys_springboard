@@ -145,25 +145,28 @@ def load_css():
             color: var(--text);
         }
 
-        /* Sidebar brand area */
+        /* Hide Streamlit's automatic multipage navigation so only our
+           custom nav (rendered below) is visible in the sidebar. */
 
-        .sidebar-brand {
-            padding: 1rem 0 1.5rem 0;
-            margin-bottom: 1rem;
-            border-bottom: 1px solid var(--border);
+        [data-testid="stSidebarNav"] {
+            display: none !important;
         }
 
-        .sidebar-brand-row {
+        /* Sidebar brand area (matches components/sidebar.py markup) */
+
+        .brand {
             display: flex;
             align-items: center;
             gap: 14px;
+
+            padding: 0.75rem 0 1.25rem 0;
         }
 
-        .sidebar-logo {
-            width: 52px;
-            height: 52px;
-            min-width: 52px;
-            border-radius: 15px;
+        .brand-icon {
+            width: 46px;
+            height: 46px;
+            min-width: 46px;
+            border-radius: 13px;
 
             display: flex;
             align-items: center;
@@ -172,23 +175,119 @@ def load_css():
             background: var(--green);
             color: white !important;
 
-            font-size: 17px;
+            font-size: 15px;
             font-weight: 800;
 
             box-shadow: 0 8px 18px rgba(32, 197, 99, 0.18);
         }
 
-        .sidebar-brand-title {
-            color: var(--text-dark);
-            font-size: 19px;
-            font-weight: 800;
-            line-height: 1.1;
+        .brand-text {
+            min-width: 0;
         }
 
-        .sidebar-brand-subtitle {
-            color: var(--text-muted);
-            font-size: 14px;
-            margin-top: 5px;
+        .brand-title {
+            color: var(--text-dark) !important;
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+            line-height: 1.2;
+        }
+
+        .brand-subtitle {
+            color: var(--text-muted) !important;
+            font-size: 13px;
+            margin-top: 2px;
+        }
+
+        .sidebar-divider {
+            height: 1px;
+            width: 100%;
+
+            margin: 0 0 0.9rem 0;
+
+            background: var(--border);
+        }
+
+        .sidebar-section {
+            margin: 1.3rem 0 0.5rem 2px;
+
+            color: #90a4b0 !important;
+
+            font-size: 11px;
+            font-weight: 800;
+
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+        }
+
+        .sidebar-bottom {
+            margin-top: 1.6rem;
+
+            border-top: 1px solid var(--border);
+        }
+
+        .signed-in {
+            padding: 1rem 0 0.6rem 2px;
+        }
+
+        .signed-label {
+            color: #90a4b0 !important;
+
+            font-size: 10px;
+            font-weight: 800;
+
+            letter-spacing: 1.2px;
+        }
+
+        .signed-name {
+            margin-top: 4px;
+
+            color: var(--text-dark) !important;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .signed-role {
+            margin-top: 3px;
+
+            display: inline-flex;
+
+            padding: 2px 10px;
+
+            background: var(--green-soft);
+            color: var(--green-dark) !important;
+
+            border-radius: 20px;
+
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+
+        /* Nav links */
+
+        section[data-testid="stSidebar"] [data-testid="stPageLink"] {
+            border-radius: 12px;
+            margin-bottom: 2px;
+        }
+
+        section[data-testid="stSidebar"] [data-testid="stPageLink"] p {
+            font-size: 14.5px !important;
+            font-weight: 500 !important;
+            color: var(--text) !important;
+        }
+
+        section[data-testid="stSidebar"] [data-testid="stPageLink"]:hover {
+            background: var(--surface-soft);
+        }
+
+        section[data-testid="stSidebar"] [data-testid="stPageLink"][aria-current="page"] {
+            background: var(--blue-soft);
+        }
+
+        section[data-testid="stSidebar"] [data-testid="stPageLink"][aria-current="page"] p {
+            color: var(--text-dark) !important;
+            font-weight: 700 !important;
         }
 
 
@@ -744,6 +843,101 @@ def load_css():
         .status-danger {
             background: #fff0f1;
             color: #c43c4b;
+        }
+
+
+        /* =========================================================
+           STATUS DOTS (replace emoji status circles)
+        ========================================================= */
+
+        .dot {
+            display: inline-block;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            margin-right: 7px;
+            position: relative;
+            top: -1px;
+        }
+
+        .dot-success { background: var(--green); }
+        .dot-danger  { background: #e5484d; }
+        .dot-warning { background: #e5a13b; }
+        .dot-info    { background: #3b82e5; }
+
+
+        /* =========================================================
+           CHART CARDS
+        ========================================================= */
+
+        .chart-card {
+            width: 100%;
+            box-sizing: border-box;
+
+            padding: 24px 26px;
+
+            background: var(--surface);
+
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+
+            box-shadow: var(--shadow);
+        }
+
+        .chart-card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+
+            margin-bottom: 4px;
+        }
+
+        .chart-card-header h4 {
+            margin: 0 0 4px 0 !important;
+
+            color: var(--text-dark) !important;
+            font-size: 18px !important;
+            font-weight: 700 !important;
+        }
+
+        .chart-card-header p {
+            margin: 0;
+
+            color: var(--text-muted);
+            font-size: 13.5px;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+
+            padding: 4px 11px;
+
+            border-radius: 20px;
+
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+
+            white-space: nowrap;
+        }
+
+        .chip-green {
+            background: var(--green-soft);
+            color: var(--green-dark);
+        }
+
+        .chip-blue {
+            background: var(--blue-soft);
+            color: #2f66c9;
+        }
+
+        .rating-stars {
+            font-size: 20px;
+            letter-spacing: 2px;
+            color: #e5a13b;
+            text-align: right;
         }
 
 

@@ -1,0 +1,1208 @@
+diff --git a/frontend/app.py b/frontend/app.py
+index 6603bdc..ae4329c 100644
+--- a/frontend/app.py
++++ b/frontend/app.py
+@@ -5,6 +5,7 @@ from auth import login, signup
+ from components.sidebar import render_sidebar
+ from api import get_api
+ from style import load_css
++from charts import area_line_chart, donut_chart
+ 
+ 
+ st.set_page_config(
+@@ -187,7 +188,7 @@ with col1:
+     st.markdown(
+         f"""
+     <div class="dashboard-card">
+-        <div class="card-icon alert-icon">🚨</div>
++        <div class="card-icon alert-icon"><span class="dot dot-danger"></span></div>
+         <div>
+             <h3>Alert Monitoring</h3>
+             <p><strong>{unresolved_alerts}</strong> unresolved alerts out of <strong>{total_alerts}</strong> total alerts.</p>
+@@ -207,7 +208,7 @@ with col2:
+     st.markdown(
+         f"""
+     <div class="dashboard-card">
+-        <div class="card-icon maintenance-icon">🔧</div>
++        <div class="card-icon maintenance-icon"><span class="dot dot-info"></span></div>
+         <div>
+             <h3>Maintenance</h3>
+             <p><strong>{pending}</strong> pending tasks out of <strong>{total_maintenance}</strong> maintenance records.</p>
+@@ -221,6 +222,89 @@ with col2:
+ st.write("")
+ 
+ 
++# =============================
++# Charts
++# =============================
++
++st.markdown("### Live Monitoring")
++
++chart_col1, chart_col2 = st.columns([2, 1])
++
++telemetry = get_api("/telemetry/all") or []
++
++with chart_col1:
++
++    st.markdown(
++        """
++        <div class="chart-card">
++            <div class="chart-card-header">
++                <div>
++                    <h4>Telemetry Trend</h4>
++                    <p>Recent temperature readings from the monitoring system</p>
++                </div>
++                <span class="chip chip-green">Live Data</span>
++            </div>
++        """,
++        unsafe_allow_html=True,
++    )
++
++    if telemetry:
++
++        recent = telemetry[-30:]
++
++        readings = list(range(1, len(recent) + 1))
++        temperatures = [record.get("temperature", 0) for record in recent]
++
++        fig = area_line_chart(
++            readings,
++            temperatures,
++            name="Temperature (°C)",
++        )
++
++        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
++
++    else:
++
++        st.info("No telemetry records available yet.")
++
++    st.markdown("</div>", unsafe_allow_html=True)
++
++with chart_col2:
++
++    st.markdown(
++        """
++        <div class="chart-card">
++            <div class="chart-card-header">
++                <div>
++                    <h4>Alert Distribution</h4>
++                    <p>Resolved vs unresolved alerts</p>
++                </div>
++            </div>
++        """,
++        unsafe_allow_html=True,
++    )
++
++    total_alerts = summary.get("total_alerts", 0)
++    unresolved_alerts = summary.get("unresolved_alerts", 0)
++    resolved_alerts = max(total_alerts - unresolved_alerts, 0)
++
++    if total_alerts:
++
++        fig = donut_chart(
++            ["Resolved", "Unresolved"],
++            [resolved_alerts, unresolved_alerts],
++            colors=["#20c563", "#e5484d"],
++        )
++
++        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
++
++    else:
++
++        st.info("No alerts recorded yet.")
++
++    st.markdown("</div>", unsafe_allow_html=True)
++
++
+ # =============================
+ # Quick Access
+ # =============================
+diff --git a/frontend/auth.py b/frontend/auth.py
+index 36d7fe6..b3edc34 100644
+--- a/frontend/auth.py
++++ b/frontend/auth.py
+@@ -37,6 +37,12 @@ def login():
+                 placeholder="Enter your password",
+             )
+ 
++            role = st.radio(
++                "Login as",
++                options=["User", "Admin"],
++                horizontal=True,
++            )
++
+             submitted = st.form_submit_button(
+                 "Login",
+                 use_container_width=True,
+@@ -62,6 +68,7 @@ def login():
+                     if response.status_code == 200:
+ 
+                         user = response.json()
++                        user["role"] = role
+ 
+                         st.session_state.logged_in = True
+                         st.session_state.user = user
+diff --git a/frontend/charts.py b/frontend/charts.py
+new file mode 100644
+index 0000000..e28d468
+--- /dev/null
++++ b/frontend/charts.py
+@@ -0,0 +1,146 @@
++"""
++Shared, professionally-styled Plotly chart builders.
++
++Centralizing chart styling here keeps every page (dashboard, alerts,
++failures, maintenance, analytics) using one consistent, non-default
++visual language instead of Streamlit's default chart styling.
++"""
++
++import plotly.graph_objects as go
++
++NAVY = "#102532"
++MUTED = "#5d7685"
++GREEN = "#20c563"
++GREEN_DARK = "#16a653"
++BLUE = "#3b82e5"
++ORANGE = "#e5a13b"
++RED = "#e5484d"
++GRID = "#eef2f1"
++
++FONT = dict(family="Helvetica, Arial, sans-serif", color=MUTED, size=13)
++
++
++def _base_layout(height=280, show_legend=False):
++    return dict(
++        height=height,
++        margin=dict(l=10, r=10, t=10, b=10),
++        paper_bgcolor="rgba(0,0,0,0)",
++        plot_bgcolor="rgba(0,0,0,0)",
++        font=FONT,
++        showlegend=show_legend,
++        legend=dict(orientation="h", y=-0.15, font=dict(color=MUTED, size=12)),
++    )
++
++
++def area_line_chart(x_values, y_values, name="Value", color=GREEN):
++    """A clean gradient area/line chart, e.g. for telemetry trends."""
++
++    fig = go.Figure()
++
++    fig.add_trace(
++        go.Scatter(
++            x=x_values,
++            y=y_values,
++            mode="lines",
++            name=name,
++            line=dict(color=color, width=3, shape="spline", smoothing=0.6),
++            fill="tozeroy",
++            fillcolor="rgba(32, 197, 99, 0.12)",
++        )
++    )
++
++    fig.update_layout(**_base_layout())
++
++    fig.update_xaxes(showgrid=False, showline=False, tickfont=dict(color=MUTED))
++    fig.update_yaxes(showgrid=True, gridcolor=GRID, zeroline=False)
++
++    return fig
++
++
++def multi_line_chart(x_values, series: dict, colors=None):
++    """Multiple named line series on one chart, e.g. temperature/humidity/power."""
++
++    if colors is None:
++        colors = [GREEN, BLUE, ORANGE, RED]
++
++    fig = go.Figure()
++
++    for index, (name, y_values) in enumerate(series.items()):
++
++        fig.add_trace(
++            go.Scatter(
++                x=x_values,
++                y=y_values,
++                mode="lines",
++                name=name,
++                line=dict(
++                    color=colors[index % len(colors)],
++                    width=2.5,
++                    shape="spline",
++                    smoothing=0.5,
++                ),
++            )
++        )
++
++    fig.update_layout(**_base_layout(height=300, show_legend=True))
++
++    fig.update_xaxes(showgrid=False, showline=False, tickfont=dict(color=MUTED))
++    fig.update_yaxes(showgrid=True, gridcolor=GRID, zeroline=False)
++
++    return fig
++
++
++def donut_chart(labels, values, colors=None):
++    """A clean donut chart, e.g. resolved vs unresolved alerts."""
++
++    if colors is None:
++        colors = [GREEN, RED, ORANGE, BLUE][: len(labels)]
++
++    fig = go.Figure(
++        data=[
++            go.Pie(
++                labels=labels,
++                values=values,
++                hole=0.62,
++                marker=dict(colors=colors, line=dict(color="#ffffff", width=2)),
++                textinfo="label+percent",
++                textfont=dict(color=NAVY, size=12),
++            )
++        ]
++    )
++
++    fig.update_layout(**_base_layout(height=280, show_legend=True))
++
++    return fig
++
++
++def bar_chart(categories, values, color=BLUE, horizontal=False):
++    """A clean bar chart, e.g. failure counts by type."""
++
++    fig = go.Figure()
++
++    if horizontal:
++        fig.add_trace(
++            go.Bar(
++                y=categories,
++                x=values,
++                orientation="h",
++                marker=dict(color=color, cornerradius=6),
++            )
++        )
++        fig.update_xaxes(showgrid=True, gridcolor=GRID, zeroline=False)
++        fig.update_yaxes(showgrid=False)
++    else:
++        fig.add_trace(
++            go.Bar(
++                x=categories,
++                y=values,
++                marker=dict(color=color, cornerradius=6),
++            )
++        )
++        fig.update_xaxes(showgrid=False)
++        fig.update_yaxes(showgrid=True, gridcolor=GRID, zeroline=False)
++
++    fig.update_layout(**_base_layout())
++
++    return fig
+diff --git a/frontend/components/sidebar.py b/frontend/components/sidebar.py
+index 48451a2..b2f6a79 100644
+--- a/frontend/components/sidebar.py
++++ b/frontend/components/sidebar.py
+@@ -52,74 +52,65 @@ def render_sidebar():
+         )
+ 
+         st.page_link(
+-            "pages/alerts.py",
+-            label="Alerts",
+-        )
+-
+-        st.page_link(
+-            "pages/failures.py",
+-            label="Failure History",
++            "pages/analytics.py",
++            label="Telemetry & Battery Health",
+         )
+ 
+         # =========================
+-        # Operations
++        # Intelligence
+         # =========================
+ 
+         st.markdown(
+-            "<div class='sidebar-section'>OPERATIONS</div>",
++            "<div class='sidebar-section'>INTELLIGENCE</div>",
+             unsafe_allow_html=True,
+         )
+ 
+         st.page_link(
+-            "pages/maintenance.py",
+-            label="Maintenance",
+-        )
+-
+-        st.page_link(
+-            "pages/sessions.py",
+-            label="Charging Sessions",
++            "pages/prediction.py",
++            label="Predictions",
+         )
+ 
+         st.page_link(
+-            "pages/operators.py",
+-            label="Operators",
++            "pages/maintenance.py",
++            label="Maintenance",
+         )
+ 
+         # =========================
+-        # Analytics
++        # Incidents
+         # =========================
+ 
+         st.markdown(
+-            "<div class='sidebar-section'>ANALYTICS</div>",
++            "<div class='sidebar-section'>INCIDENTS</div>",
+             unsafe_allow_html=True,
+         )
+ 
+         st.page_link(
+-            "pages/analytics.py",
+-            label="Station Analytics",
++            "pages/alerts.py",
++            label="Alerts",
++        )
++
++        st.page_link(
++            "pages/failures.py",
++            label="Failure History",
+         )
+ 
+         # =========================
+-        # AI
++        # Operations
+         # =========================
+ 
+         st.markdown(
+-            "<div class='sidebar-section'>AI</div>",
++            "<div class='sidebar-section'>OPERATIONS</div>",
+             unsafe_allow_html=True,
+         )
+ 
+         st.page_link(
+-            "pages/prediction.py",
+-            label="Predictive Maintenance",
++            "pages/sessions.py",
++            label="Charging Sessions",
+         )
+ 
+-        # =========================
+-        # Feedback
+-        # =========================
+-
+-        st.markdown(
+-            "<div class='sidebar-section'>FEEDBACK</div>",
+-            unsafe_allow_html=True,
++        st.page_link(
++            "pages/operators.py",
++            label="Operators",
+         )
+ 
+         st.page_link(
+@@ -138,12 +129,14 @@ def render_sidebar():
+ 
+         user = st.session_state.get("user", {})
+         name = user.get("name", "User")
++        role = user.get("role", "User")
+ 
+         st.markdown(
+             f"""
+             <div class="signed-in">
+                 <div class="signed-label">SIGNED IN AS</div>
+                 <div class="signed-name">{name}</div>
++                <span class="signed-role">{role}</span>
+             </div>
+             """,
+             unsafe_allow_html=True,
+diff --git a/frontend/pages/alerts.py b/frontend/pages/alerts.py
+index 5d44b05..09a759c 100644
+--- a/frontend/pages/alerts.py
++++ b/frontend/pages/alerts.py
+@@ -6,6 +6,7 @@ from style import load_css
+ from auth import require_login
+ from components.sidebar import render_sidebar
+ from auth import require_login
++from charts import donut_chart
+ 
+ st.set_page_config(
+     page_title="Alerts",
+@@ -24,7 +25,7 @@ render_sidebar()
+ # Header
+ # =============================
+ 
+-st.title(" Alerts")
++st.title("Alerts")
+ st.caption("Monitor and review charging station alerts.")
+ 
+ 
+@@ -67,6 +68,38 @@ with col3:
+ st.divider()
+ 
+ 
++# =============================
++# Alert Distribution
++# =============================
++
++if total_alerts:
++
++    st.markdown(
++        """
++        <div class="chart-card">
++            <div class="chart-card-header">
++                <div>
++                    <h4>Alert Distribution</h4>
++                    <p>Resolved vs unresolved alerts</p>
++                </div>
++            </div>
++        """,
++        unsafe_allow_html=True,
++    )
++
++    fig = donut_chart(
++        ["Resolved", "Unresolved"],
++        [len(resolved_alerts), len(unresolved_alerts)],
++        colors=["#20c563", "#e5484d"],
++    )
++
++    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
++
++    st.markdown("</div>", unsafe_allow_html=True)
++
++    st.write("")
++
++
+ # =============================
+ # Filters
+ # =============================
+@@ -145,11 +178,11 @@ for alert in filtered_alerts:
+ 
+     if is_resolved:
+ 
+-        status_text = "🟢 Resolved"
++        status_text = "<span class='dot dot-success'></span>Resolved"
+ 
+     else:
+ 
+-        status_text = "🔴 Unresolved"
++        status_text = "<span class='dot dot-danger'></span>Unresolved"
+ 
+     with st.container(border=True):
+ 
+@@ -165,7 +198,10 @@ for alert in filtered_alerts:
+ 
+         with alert_col2:
+ 
+-            st.markdown(f"**{status_text}**")
++            st.markdown(
++                f"<strong>{status_text}</strong>",
++                unsafe_allow_html=True,
++            )
+ 
+             timestamp = alert.get("timestamp", "")
+ 
+diff --git a/frontend/pages/analytics.py b/frontend/pages/analytics.py
+index c604d27..9b51145 100644
+--- a/frontend/pages/analytics.py
++++ b/frontend/pages/analytics.py
+@@ -8,6 +8,7 @@ import streamlit as st
+ from api import get_api
+ from style import load_css
+ from components.sidebar import render_sidebar
++from charts import multi_line_chart
+ 
+ 
+ st.set_page_config(
+@@ -28,7 +29,7 @@ render_sidebar()
+ # Header
+ # =============================
+ 
+-st.title(" Station Analytics")
++st.title("Station Analytics")
+ st.caption("View performance and operational analytics for charging stations.")
+ 
+ 
+@@ -116,13 +117,62 @@ with overview_col3:
+     )
+ 
+ 
++# =============================
++# Telemetry & Battery Health Trend
++# =============================
++
++telemetry = get_api("/telemetry/all") or []
++
++station_telemetry = [
++    record
++    for record in telemetry
++    if record.get("charging_station_id") == selected_id
++]
++
++if station_telemetry:
++
++    st.write("")
++
++    st.markdown(
++        """
++        <div class="chart-card">
++            <div class="chart-card-header">
++                <div>
++                    <h4>Telemetry & Battery Health</h4>
++                    <p>Temperature, humidity and power consumption over recorded readings</p>
++                </div>
++                <span class="chip chip-blue">Monitored</span>
++            </div>
++        """,
++        unsafe_allow_html=True,
++    )
++
++    reading_numbers = list(range(1, len(station_telemetry) + 1))
++
++    series = {
++        "Temperature (°C)": [
++            record.get("temperature", 0) for record in station_telemetry
++        ],
++        "Humidity (%)": [record.get("humidity", 0) for record in station_telemetry],
++        "Power Consumption": [
++            record.get("power_consumption", 0) for record in station_telemetry
++        ],
++    }
++
++    fig = multi_line_chart(reading_numbers, series)
++
++    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
++
++    st.markdown("</div>", unsafe_allow_html=True)
++
++
+ # =============================
+ # Charging Statistics
+ # =============================
+ 
+ st.divider()
+ 
+-st.subheader("⚡ Charging Performance")
++st.subheader("Charging Performance")
+ 
+ charge_col1, charge_col2, charge_col3 = st.columns(3)
+ 
+@@ -151,7 +201,7 @@ with charge_col3:
+ 
+ st.divider()
+ 
+-st.subheader("🛠️ Health & Maintenance")
++st.subheader("Health & Maintenance")
+ 
+ health_col1, health_col2, health_col3, health_col4 = st.columns(4)
+ 
+@@ -200,11 +250,11 @@ with maintenance_col2:
+ 
+     if unresolved_failures > 0:
+         st.warning(
+-            f"⚠️ {unresolved_failures} unresolved failure(s) "
++            f"{unresolved_failures} unresolved failure(s) "
+             "recorded for this station."
+         )
+     else:
+-        st.success("✓ No unresolved failures recorded.")
++        st.success("No unresolved failures recorded.")
+ 
+ 
+ # =============================
+diff --git a/frontend/pages/failures.py b/frontend/pages/failures.py
+index 19c0b85..e9c3cbe 100644
+--- a/frontend/pages/failures.py
++++ b/frontend/pages/failures.py
+@@ -1,10 +1,13 @@
+ # pyrefly: ignore [missing-import]
+ import streamlit as st
+ 
++from collections import Counter
++
+ from api import get_api
+ from style import load_css
+ from auth import require_login
+ from components.sidebar import render_sidebar
++from charts import bar_chart
+ 
+ st.set_page_config(
+     page_title="Failure History",
+@@ -73,6 +76,42 @@ with col3:
+ st.divider()
+ 
+ 
++# =============================
++# Failure Distribution
++# =============================
++
++if failures:
++
++    type_counts = Counter(
++        failure.get("failure_type", "Unknown") for failure in failures
++    )
++
++    st.markdown(
++        """
++        <div class="chart-card">
++            <div class="chart-card-header">
++                <div>
++                    <h4>Failure Distribution</h4>
++                    <p>Recorded failures by type</p>
++                </div>
++            </div>
++        """,
++        unsafe_allow_html=True,
++    )
++
++    fig = bar_chart(
++        list(type_counts.keys()),
++        list(type_counts.values()),
++        color="#3b82e5",
++    )
++
++    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
++
++    st.markdown("</div>", unsafe_allow_html=True)
++
++    st.write("")
++
++
+ # =============================
+ # Filters
+ # =============================
+@@ -156,9 +195,9 @@ for failure in filtered_failures:
+     resolved = failure.get("resolved")
+ 
+     if resolved == "Yes":
+-        status_text = "🟢 Resolved"
++        status_text = "<span class='dot dot-success'></span>Resolved"
+     else:
+-        status_text = "🔴 Unresolved"
++        status_text = "<span class='dot dot-danger'></span>Unresolved"
+ 
+     with st.container(border=True):
+ 
+@@ -174,7 +213,10 @@ for failure in filtered_failures:
+ 
+         with failure_col2:
+ 
+-            st.markdown(f"**{status_text}**")
++            st.markdown(
++                f"<strong>{status_text}</strong>",
++                unsafe_allow_html=True,
++            )
+ 
+             failure_date = failure.get("failure_date", "")
+ 
+diff --git a/frontend/pages/feedback.py b/frontend/pages/feedback.py
+index 90a5ba5..b2f001d 100644
+--- a/frontend/pages/feedback.py
++++ b/frontend/pages/feedback.py
+@@ -27,7 +27,7 @@ render_sidebar()
+ # Header
+ # =============================
+ 
+-st.title(" User Feedback")
++st.title("User Feedback")
+ 
+ st.caption(
+     "Share feedback about charging stations and help improve "
+@@ -198,7 +198,7 @@ if feedback_list:
+ 
+         rating_value = feedback.get("rating", 0)
+ 
+-        stars = "⭐" * rating_value
++        stars = "★" * rating_value + "☆" * (5 - rating_value)
+ 
+         comments_text = feedback.get("comments")
+ 
+@@ -219,7 +219,10 @@ if feedback_list:
+ 
+             with col2:
+ 
+-                st.markdown(f"### {stars}")
++                st.markdown(
++                    f"<div class='rating-stars'>{stars}</div>",
++                    unsafe_allow_html=True,
++                )
+ 
+ else:
+ 
+diff --git a/frontend/pages/maintenance.py b/frontend/pages/maintenance.py
+index 90d63ad..138520d 100644
+--- a/frontend/pages/maintenance.py
++++ b/frontend/pages/maintenance.py
+@@ -6,6 +6,7 @@ from style import load_css
+ from auth import require_login
+ from components.sidebar import render_sidebar
+ from auth import require_login
++from charts import donut_chart
+ 
+ st.set_page_config(
+     page_title="Maintenance",
+@@ -22,7 +23,7 @@ render_sidebar()
+ # Header
+ # =============================
+ 
+-st.title(" Maintenance")
++st.title("Maintenance")
+ st.caption("Track scheduled and completed charging station maintenance.")
+ 
+ 
+@@ -72,6 +73,38 @@ with col4:
+ st.divider()
+ 
+ 
++# =============================
++# Maintenance Status
++# =============================
++
++if total_maintenance:
++
++    st.markdown(
++        """
++        <div class="chart-card">
++            <div class="chart-card-header">
++                <div>
++                    <h4>Maintenance Status</h4>
++                    <p>Pending vs scheduled vs completed</p>
++                </div>
++            </div>
++        """,
++        unsafe_allow_html=True,
++    )
++
++    fig = donut_chart(
++        ["Pending", "Scheduled", "Completed"],
++        [len(pending), len(scheduled), len(completed)],
++        colors=["#e5a13b", "#3b82e5", "#20c563"],
++    )
++
++    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
++
++    st.markdown("</div>", unsafe_allow_html=True)
++
++    st.write("")
++
++
+ # =============================
+ # Filters
+ # =============================
+@@ -169,14 +202,7 @@ for item in filtered_maintenance:
+         f"Station {station_id}",
+     )
+ 
+-    status = item.get("status", "Unknown")
+-
+-    if status == "Completed":
+-        display_status = "🟢 Completed"
+-    elif status == "Scheduled":
+-        display_status = "🔵 Scheduled"
+-    else:
+-        display_status = "🟡 Pending"
++    display_status = item.get("status", "Unknown")
+ 
+     table_data.append(
+         {
+diff --git a/frontend/pages/prediction.py b/frontend/pages/prediction.py
+index 2f7a28d..8e920f9 100644
+--- a/frontend/pages/prediction.py
++++ b/frontend/pages/prediction.py
+@@ -163,7 +163,7 @@ st.markdown("<br>", unsafe_allow_html=True)
+ # =========================================================
+ 
+ if st.button(
+-    "  Run Health Prediction",
++    "Run Health Prediction",
+     type="primary",
+     use_container_width=True,
+ ):
+@@ -246,11 +246,11 @@ if "last_prediction" in st.session_state:
+ 
+     if "healthy" in result_text.lower():
+ 
+-        st.success(f"🟢 **Charging Station Healthy**  \n" f"{result_text}")
++        st.success(f"**Charging Station Healthy**  \n" f"{result_text}")
+ 
+     else:
+ 
+-        st.error(f"🔴 **Potential Failure Detected**  \n" f"{result_text}")
++        st.error(f"**Potential Failure Detected**  \n" f"{result_text}")
+ 
+     # -----------------------------------------------------
+     # Prediction details
+diff --git a/frontend/pages/station_details.py b/frontend/pages/station_details.py
+index decfafe..181bd76 100644
+--- a/frontend/pages/station_details.py
++++ b/frontend/pages/station_details.py
+@@ -7,6 +7,7 @@ from style import load_css
+ from auth import require_login
+ from components.sidebar import render_sidebar
+ from auth import require_login
++from charts import multi_line_chart
+ 
+ st.set_page_config(
+     page_title="Station Details",
+@@ -37,7 +38,7 @@ if stations is None:
+ # Station Selection
+ # =============================
+ 
+-st.title(" Station Details")
++st.title("Station Details")
+ st.caption("View station information and latest telemetry.")
+ 
+ station_options = {station["station_name"]: station["id"] for station in stations}
+@@ -110,6 +111,8 @@ if station_telemetry:
+ 
+     st.markdown("#### Telemetry History")
+ 
++    reading_numbers = list(range(1, len(station_telemetry) + 1))
++
+     telemetry_chart_data = {
+         "Temperature (°C)": [
+             record.get("temperature", 0) for record in station_telemetry
+@@ -120,10 +123,13 @@ if station_telemetry:
+         ],
+     }
+ 
+-    st.line_chart(
+-        telemetry_chart_data,
+-        use_container_width=True,
+-    )
++    st.markdown('<div class="chart-card">', unsafe_allow_html=True)
++
++    fig = multi_line_chart(reading_numbers, telemetry_chart_data)
++
++    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
++
++    st.markdown("</div>", unsafe_allow_html=True)
+ 
+ else:
+     st.info("No telemetry records available for this station.")
+@@ -148,9 +154,9 @@ if station_alerts:
+         resolved = alert.get("is_resolved", False)
+ 
+         if resolved:
+-            status = "🟢 Resolved"
++            status = "<span class='dot dot-success'></span>Resolved"
+         else:
+-            status = "🔴 Unresolved"
++            status = "<span class='dot dot-danger'></span>Unresolved"
+ 
+         st.markdown(
+             f"""
+@@ -158,8 +164,9 @@ if station_alerts:
+ 
+             {alert.get('description', 'No description')}
+ 
+-            {status}
+-            """
++            <strong>{status}</strong>
++            """,
++            unsafe_allow_html=True,
+         )
+ 
+         st.divider()
+diff --git a/frontend/pages/stations.py b/frontend/pages/stations.py
+index 0ea3a26..128057c 100644
+--- a/frontend/pages/stations.py
++++ b/frontend/pages/stations.py
+@@ -17,7 +17,7 @@ if not st.session_state.get("logged_in", False):
+ 
+ render_sidebar()
+ 
+-st.title(" Charging Stations")
++st.title("Charging Stations")
+ st.caption("Monitor and view all registered EV charging stations.")
+ 
+ # Get stations from backend
+diff --git a/frontend/style.py b/frontend/style.py
+index 370f75f..d17abe7 100644
+--- a/frontend/style.py
++++ b/frontend/style.py
+@@ -145,25 +145,28 @@ def load_css():
+             color: var(--text);
+         }
+ 
+-        /* Sidebar brand area */
++        /* Hide Streamlit's automatic multipage navigation so only our
++           custom nav (rendered below) is visible in the sidebar. */
+ 
+-        .sidebar-brand {
+-            padding: 1rem 0 1.5rem 0;
+-            margin-bottom: 1rem;
+-            border-bottom: 1px solid var(--border);
++        [data-testid="stSidebarNav"] {
++            display: none !important;
+         }
+ 
+-        .sidebar-brand-row {
++        /* Sidebar brand area (matches components/sidebar.py markup) */
++
++        .brand {
+             display: flex;
+             align-items: center;
+             gap: 14px;
++
++            padding: 0.75rem 0 1.25rem 0;
+         }
+ 
+-        .sidebar-logo {
+-            width: 52px;
+-            height: 52px;
+-            min-width: 52px;
+-            border-radius: 15px;
++        .brand-icon {
++            width: 46px;
++            height: 46px;
++            min-width: 46px;
++            border-radius: 13px;
+ 
+             display: flex;
+             align-items: center;
+@@ -172,23 +175,119 @@ def load_css():
+             background: var(--green);
+             color: white !important;
+ 
+-            font-size: 17px;
++            font-size: 15px;
+             font-weight: 800;
+ 
+             box-shadow: 0 8px 18px rgba(32, 197, 99, 0.18);
+         }
+ 
+-        .sidebar-brand-title {
+-            color: var(--text-dark);
+-            font-size: 19px;
++        .brand-text {
++            min-width: 0;
++        }
++
++        .brand-title {
++            color: var(--text-dark) !important;
++            font-size: 15px;
+             font-weight: 800;
+-            line-height: 1.1;
++            letter-spacing: 0.3px;
++            line-height: 1.2;
+         }
+ 
+-        .sidebar-brand-subtitle {
+-            color: var(--text-muted);
+-            font-size: 14px;
+-            margin-top: 5px;
++        .brand-subtitle {
++            color: var(--text-muted) !important;
++            font-size: 13px;
++            margin-top: 2px;
++        }
++
++        .sidebar-divider {
++            height: 1px;
++            width: 100%;
++
++            margin: 0 0 0.9rem 0;
++
++            background: var(--border);
++        }
++
++        .sidebar-section {
++            margin: 1.3rem 0 0.5rem 2px;
++
++            color: #90a4b0 !important;
++
++            font-size: 11px;
++            font-weight: 800;
++
++            letter-spacing: 1.4px;
++            text-transform: uppercase;
++        }
++
++        .sidebar-bottom {
++            margin-top: 1.6rem;
++
++            border-top: 1px solid var(--border);
++        }
++
++        .signed-in {
++            padding: 1rem 0 0.6rem 2px;
++        }
++
++        .signed-label {
++            color: #90a4b0 !important;
++
++            font-size: 10px;
++            font-weight: 800;
++
++            letter-spacing: 1.2px;
++        }
++
++        .signed-name {
++            margin-top: 4px;
++
++            color: var(--text-dark) !important;
++            font-size: 15px;
++            font-weight: 700;
++        }
++
++        .signed-role {
++            margin-top: 3px;
++
++            display: inline-flex;
++
++            padding: 2px 10px;
++
++            background: var(--green-soft);
++            color: var(--green-dark) !important;
++
++            border-radius: 20px;
++
++            font-size: 11px;
++            font-weight: 700;
++            letter-spacing: 0.3px;
++        }
++
++        /* Nav links */
++
++        section[data-testid="stSidebar"] [data-testid="stPageLink"] {
++            border-radius: 12px;
++            margin-bottom: 2px;
++        }
++
++        section[data-testid="stSidebar"] [data-testid="stPageLink"] p {
++            font-size: 14.5px !important;
++            font-weight: 500 !important;
++            color: var(--text) !important;
++        }
++
++        section[data-testid="stSidebar"] [data-testid="stPageLink"]:hover {
++            background: var(--surface-soft);
++        }
++
++        section[data-testid="stSidebar"] [data-testid="stPageLink"][aria-current="page"] {
++            background: var(--blue-soft);
++        }
++
++        section[data-testid="stSidebar"] [data-testid="stPageLink"][aria-current="page"] p {
++            color: var(--text-dark) !important;
++            font-weight: 700 !important;
+         }
+ 
+ 
+@@ -747,6 +846,101 @@ def load_css():
+         }
+ 
+ 
++        /* =========================================================
++           STATUS DOTS (replace emoji status circles)
++        ========================================================= */
++
++        .dot {
++            display: inline-block;
++            width: 9px;
++            height: 9px;
++            border-radius: 50%;
++            margin-right: 7px;
++            position: relative;
++            top: -1px;
++        }
++
++        .dot-success { background: var(--green); }
++        .dot-danger  { background: #e5484d; }
++        .dot-warning { background: #e5a13b; }
++        .dot-info    { background: #3b82e5; }
++
++
++        /* =========================================================
++           CHART CARDS
++        ========================================================= */
++
++        .chart-card {
++            width: 100%;
++            box-sizing: border-box;
++
++            padding: 24px 26px;
++
++            background: var(--surface);
++
++            border: 1px solid var(--border);
++            border-radius: var(--radius);
++
++            box-shadow: var(--shadow);
++        }
++
++        .chart-card-header {
++            display: flex;
++            align-items: flex-start;
++            justify-content: space-between;
++
++            margin-bottom: 4px;
++        }
++
++        .chart-card-header h4 {
++            margin: 0 0 4px 0 !important;
++
++            color: var(--text-dark) !important;
++            font-size: 18px !important;
++            font-weight: 700 !important;
++        }
++
++        .chart-card-header p {
++            margin: 0;
++
++            color: var(--text-muted);
++            font-size: 13.5px;
++        }
++
++        .chip {
++            display: inline-flex;
++            align-items: center;
++
++            padding: 4px 11px;
++
++            border-radius: 20px;
++
++            font-size: 11px;
++            font-weight: 700;
++            letter-spacing: 0.4px;
++            text-transform: uppercase;
++
++            white-space: nowrap;
++        }
++
++        .chip-green {
++            background: var(--green-soft);
++            color: var(--green-dark);
++        }
++
++        .chip-blue {
++            background: var(--blue-soft);
++            color: #2f66c9;
++        }
++
++        .rating-stars {
++            font-size: 20px;
++            letter-spacing: 2px;
++            color: #e5a13b;
++            text-align: right;
++        }
++
++
+         /* =========================================================
+            QUICK ACCESS
+         ========================================================= */
+diff --git a/requirements.txt b/requirements.txt
+index 0b72536..94510c8 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -2,4 +2,9 @@ fastapi
+ uvicorn
+ sqlalchemy
+ pydantic
+-python-multipart
+\ No newline at end of file
++pydantic[email]
++python-multipart
++bcrypt
++plotly
++streamlit
++requests
+\ No newline at end of file

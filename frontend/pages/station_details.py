@@ -7,6 +7,7 @@ from style import load_css
 from auth import require_login
 from components.sidebar import render_sidebar
 from auth import require_login
+from charts import multi_line_chart
 
 st.set_page_config(
     page_title="Station Details",
@@ -37,7 +38,7 @@ if stations is None:
 # Station Selection
 # =============================
 
-st.title(" Station Details")
+st.title("Station Details")
 st.caption("View station information and latest telemetry.")
 
 station_options = {station["station_name"]: station["id"] for station in stations}
@@ -110,6 +111,8 @@ if station_telemetry:
 
     st.markdown("#### Telemetry History")
 
+    reading_numbers = list(range(1, len(station_telemetry) + 1))
+
     telemetry_chart_data = {
         "Temperature (°C)": [
             record.get("temperature", 0) for record in station_telemetry
@@ -120,10 +123,13 @@ if station_telemetry:
         ],
     }
 
-    st.line_chart(
-        telemetry_chart_data,
-        use_container_width=True,
-    )
+    st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+
+    fig = multi_line_chart(reading_numbers, telemetry_chart_data)
+
+    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
 else:
     st.info("No telemetry records available for this station.")
@@ -148,9 +154,9 @@ if station_alerts:
         resolved = alert.get("is_resolved", False)
 
         if resolved:
-            status = "🟢 Resolved"
+            status = "<span class='dot dot-success'></span>Resolved"
         else:
-            status = "🔴 Unresolved"
+            status = "<span class='dot dot-danger'></span>Unresolved"
 
         st.markdown(
             f"""
@@ -158,8 +164,9 @@ if station_alerts:
 
             {alert.get('description', 'No description')}
 
-            {status}
-            """
+            <strong>{status}</strong>
+            """,
+            unsafe_allow_html=True,
         )
 
         st.divider()
